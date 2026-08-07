@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_filters.html" import filter_bar, sort_th %}
+{% block content %}
+<h3>Allocations — {{ period }}</h3>
+
+{{ filter_bar(filters, utility_types, positions,
+              csv_endpoint='reports.quarterly_csv',
+              pdf_endpoint='reports.quarterly_pdf') }}
+
+<table class="table table-sm">
+  <thead>
+    <tr>
+      {{ sort_th('Beneficiary', 'beneficiary', filters) }}
+      {{ sort_th('Position', 'position', filters) }}
+      {{ sort_th('Utility', 'utility', filters) }}
+      {{ sort_th('Number', 'number', filters) }}
+      {{ sort_th('Quarter', 'quarter', filters) }}
+      {{ sort_th('Allocated', 'allocated', filters) }}
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td>{{ row.beneficiary }}</td>
+      <td>{{ row.position }}</td>
+      <td>{{ row.utility_type }}</td>
+      <td>{{ row.number }}</td>
+      <td>Q{{ row.quarter }} {{ row.year }}</td>
+      <td>{{ row.allocated|ugx }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="text-muted">No allocations match these filters.</td></tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr class="fw-bold">
+      <td colspan="5">Total ({{ rows|length }})</td>
+      <td>{{ total|ugx }}</td>
+    </tr>
+  </tfoot>
+</table>
+{% endblock %}

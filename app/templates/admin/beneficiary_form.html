@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>{{ "Edit Beneficiary" if beneficiary else "Register Beneficiary" }}</h3>
+
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <label class="form-label">Name</label>
+      <input type="text" name="name" class="form-control" required
+             value="{{ beneficiary.name if beneficiary else '' }}">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Position</label>
+      <select name="position" id="position" class="form-select" required>
+        {% for p in positions %}
+        <option value="{{ p }}" {% if beneficiary and beneficiary.position == p %}selected{% endif %}>{{ p }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4" id="facility-wrap">
+      <label class="form-label">Facility</label>
+      <select name="facility" class="form-select">
+        <option value="">—</option>
+        {% for f in facilities %}
+        <option value="{{ f }}" {% if beneficiary and beneficiary.facility == f %}selected{% endif %}>{{ f }}</option>
+        {% endfor %}
+      </select>
+      <div class="form-text">Required for {{ major_accounts }}.</div>
+    </div>
+
+    <div class="col-md-4" id="department-wrap">
+      <label class="form-label">Department</label>
+      <select name="department" class="form-select">
+        <option value="">—</option>
+        {% for d in departments %}
+        <option value="{{ d }}" {% if beneficiary and beneficiary.department == d %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+      <div class="form-text">Required for staff positions.</div>
+    </div>
+  </div>
+
+  <h5>Meter / Phone Numbers</h5>
+  <p class="text-muted small">Add a row per number. A beneficiary can hold several per utility.</p>
+
+  <table class="table table-sm align-middle" id="meters">
+    <thead><tr><th style="width:30%">Utility</th><th>Number</th><th style="width:1%"></th></tr></thead>
+    <tbody id="meter-rows">
+      {% for meter in (beneficiary.meters if beneficiary else []) %}
+      <tr>
+        <td>
+          <input type="hidden" name="meter_id" value="{{ meter.id }}">
+          <select name="meter_utility" class="form-select form-select-sm">
+            {% for t in utility_types %}
+            <option value="{{ t.id }}" {% if t.id == meter.utility_type_id %}selected{% endif %}>{{ t.name }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        <td><input type="text" name="meter_number" class="form-control form-control-sm" value="{{ meter.number }}"></td>
+        <td><button type="button" class="btn btn-outline-danger btn-sm remove-row">&times;</button></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="add-row">+ Add number</button>
+  <div>
+    <button class="btn btn-primary">{{ "Save Changes" if beneficiary else "Register" }}</button>
+    <a class="btn btn-link" href="{{ url_for('admin.dashboard') }}">Cancel</a>
+  </div>
+</form>
+
+<template id="row-template">
+  <tr>
+    <td>
+      <input type="hidden" name="meter_id" value="">
+      <select name="meter_utility" class="form-select form-select-sm">
+        {% for t in utility_types %}
+        <option value="{{ t.id }}">{{ t.name }}</option>
+        {% endfor %}
+      </select>
+    </td>
+    <td><input type="text" name="meter_number" class="form-control form-control-sm" placeholder="e.g. 0412345678"></td>
+    <td><button type="button" class="btn btn-outline-danger btn-sm remove-row">&times;</button></td>
+  </tr>
+</template>
+
+<script>
+  const rows = document.getElementById('meter-rows');
+  const template = document.getElementById('row-template');
+
+  document.getElementById('add-row').addEventListener('click', () => {
+    rows.appendChild(template.content.cloneNode(true));
+  });
+
+  rows.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-row')) e.target.closest('tr').remove();
+  });
+
+  // Major Accounts sit in a facility; every other position sits in a department.
+  const position = document.getElementById('position');
+  const facilityWrap = document.getElementById('facility-wrap');
+  const departmentWrap = document.getElementById('department-wrap');
+  const toggleUnit = () => {
+    const isMajorAccount = position.value === {{ major_accounts|tojson }};
+    facilityWrap.style.display = isMajorAccount ? '' : 'none';
+    departmentWrap.style.display = isMajorAccount ? 'none' : '';
+  };
+  position.addEventListener('change', toggleUnit);
+  toggleUnit();
+
+  if (!rows.children.length) rows.appendChild(template.content.cloneNode(true));
+</script>
+{% endblock %}

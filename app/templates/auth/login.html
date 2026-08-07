@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="fw-bold mb-1">Welcome back</h3>
+<p class="text-muted mb-4">Sign in to continue to Utility Manager.</p>
+<form method="post" autocomplete="off">
+  {{ form.hidden_tag() }}
+  <div class="mb-3">
+    {{ form.email.label(class="form-label") }}
+    {{ form.email(class="form-control", autocomplete="off", autocorrect="off", autocapitalize="off", spellcheck="false") }}
+  </div>
+  <div class="mb-3">
+    {{ form.password.label(class="form-label") }}
+    {{ form.password(class="form-control", autocomplete="new-password") }}
+  </div>
+  {{ form.submit(class="btn btn-primary w-100") }}
+</form>
+<p class="small mt-3 mb-0">
+  <a href="{{ url_for('auth.forgot_password') }}">Forgot password?</a>
+</p>
+{% endblock %}

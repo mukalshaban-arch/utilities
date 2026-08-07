@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% macro money(v) %}
+<span class="{{ 'text-danger' if v < 0 else '' }}">{{ v|ugx }}</span>
+{% endmacro %}
+{% block content %}
+<h3>Major Accounts — Water &amp; Power Ledger</h3>
+<p class="text-muted small">
+  Each meter carries a running balance. This quarter's spendable pool =
+  balance carried in + this quarter's allocation. Balance = pool − usage, and it
+  carries into the next quarter (a negative balance is a carried-forward deficit).
+</p>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+  <div class="col-auto">
+    <label class="form-label small mb-0">Year</label>
+    <input type="number" name="year" value="{{ filters.year }}" class="form-control form-control-sm" style="width:6rem">
+  </div>
+  <div class="col-auto">
+    <label class="form-label small mb-0">Quarter</label>
+    <select name="quarter" class="form-select form-select-sm">
+      <option value="0" {% if all_quarters %}selected{% endif %}>All</option>
+      {% for q in [1, 2, 3, 4] %}
+      <option value="{{ q }}" {% if q == filters.quarter %}selected{% endif %}>Q{{ q }} ({{ q|qmonths }})</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <label class="form-label small mb-0">Major Account</label>
+    <select name="account" class="form-select form-select-sm">
+      <option value="0">All</option>
+      {% for id, label in accounts %}
+      <option value="{{ id }}" {% if id == filters.account %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <label class="form-label small mb-0">Utility</label>
+    <select name="utility" class="form-select form-select-sm">
+      <option value="">All</option>
+      {% for u in utilities %}
+      <option value="{{ u }}" {% if u == filters.utility %}selected{% endif %}>{{ u }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    {# Submit the live dropdown values to each endpoint, so exports match what's selected. #}
+    <button class="btn btn-secondary btn-sm" formaction="{{ url_for('admin.major_accounts') }}">View</button>
+    <button class="btn btn-outline-primary btn-sm" formaction="{{ url_for('admin.major_accounts_csv') }}">Export CSV</button>
+    <button class="btn btn-outline-danger btn-sm" formaction="{{ url_for('admin.major_accounts_pdf') }}">Export PDF</button>
+  </div>
+</form>
+
+{% if rows %}
+<div class="row mb-4">
+  <div class="col-lg-8">
+    <div class="card"><div class="card-body">
+      <h6 class="card-title text-muted">
+        Quarterly trend — {{ filters.year }}
+        {%- if filters.account %} · {{ (accounts|selectattr('0','equalto',filters.account)|first)[1] }}{% endif %}
+        {%- if filters.utility %} · {{ filters.utility }}{% endif %}
+      </h6>
+      <div class="chart-box tall"><canvas id="chart-trend"></canvas></div>
+    </div></div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card"><div class="card-body">
+      <h6 class="card-title text-muted">Usage by utility — {{ filters.year }}</h6>
+      <div class="chart-box tall"><canvas id="chart-utility-usage"></canvas></div>
+    </div></div>
+  </div>
+</div>
+{% endif %}
+
+{% if all_quarters %}
+{# Read-only progression across Q1-Q4. Usage is recorded one quarter at a time. #}
+{% for row in rows %}
+<h5 class="mt-4">{{ row.beneficiary.label }}</h5>
+<table class="table table-sm align-middle">
+  <thead>
+    <tr>
+      <th>Utility</th>
+      <th>Number</th>
+      <th>Quarter</th>
+      <th class="text-end">Carried in</th>
+      <th class="text-end">Allocation</th>
+      <th class="text-end">Pool</th>
+      <th class="text-end">Usage</th>
+      <th class="text-end">Balance</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for line in row.lines %}
+    <tr>
+      <td>{{ line.meter.utility_type.name }}</td>
+      <td><code>{{ line.meter.number }}</code></td>
+      <td>Q{{ line.quarter }} {{ filters.year }}</td>
+      <td class="text-end">{{ money(line.carry_in) }}</td>
+      <td class="text-end">{{ line.allocation|ugx }}</td>
+      <td class="text-end fw-semibold">{{ money(line.pool) }}</td>
+      <td class="text-end">{{ line.usage|ugx }}</td>
+      <td class="text-end fw-semibold">{{ money(line.balance) }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8" class="text-muted">No activity in {{ filters.year }}.</td></tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr class="fw-bold">
+      <td colspan="4" class="text-end">Account total</td>
+      <td class="text-end">{{ money(row.total_allocation) }}</td>
+      <td></td>
+      <td class="text-end">{{ money(row.total_usage) }}</td>
+      <td class="text-end">{{ money(row.total_balance) }}</td>
+    </tr>
+  </tfoot>
+</table>
+{% else %}
+<p class="text-muted">No Major Accounts with water or power meters registered.</p>
+{% endfor %}
+
+{% else %}
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="year" value="{{ filters.year }}">
+  <input type="hidden" name="quarter" value="{{ filters.quarter }}">
+  <input type="hidden" name="account" value="{{ filters.account }}">
+  <input type="hidden" name="utility" value="{{ filters.utility }}">
+
+  {% for row in rows %}
+  <h5 class="mt-4">{{ row.beneficiary.label }}</h5>
+  <table class="table table-sm align-middle">
+    <thead>
+      <tr>
+        <th>Utility</th>
+        <th>Number</th>
+        <th class="text-end">Carried in</th>
+        <th class="text-end">Allocation</th>
+        <th class="text-end">Pool</th>
+        <th style="width:12rem">Usage (UGX)</th>
+        <th class="text-end">Balance</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in row.lines %}
+      <tr>
+        <td>{{ line.meter.utility_type.name }}</td>
+        <td><code>{{ line.meter.number }}</code></td>
+        <td class="text-end">{{ money(line.carry_in) }}</td>
+        <td class="text-end">{{ line.allocation|ugx }}</td>
+        <td class="text-end fw-semibold">{{ money(line.pool) }}</td>
+        <td>
+          <input type="number" step="any" min="0" class="form-control form-control-sm"
+                 name="usage_{{ line.meter.id }}"
+                 value="{{ '%0.2f'|format(line.usage) if line.usage else '' }}" placeholder="0">
+        </td>
+        <td class="text-end fw-semibold">{{ money(line.balance) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr class="fw-bold">
+        <td colspan="3" class="text-end">Account total</td>
+        <td class="text-end">{{ money(row.total_allocation) }}</td>
+        <td></td>
+        <td class="text-end">{{ money(row.total_usage) }}</td>
+        <td class="text-end">{{ money(row.total_balance) }}</td>
+      </tr>
+    </tfoot>
+  </table>
+  {% else %}
+  <p class="text-muted">No Major Accounts with water or power meters registered.</p>
+  {% endfor %}
+
+  {% if rows %}
+  <div class="d-flex justify-content-between align-items-center mt-3">
+    <div class="fs-6">
+      Allocated: {{ total_allocation|ugx }} &nbsp;·&nbsp;
+      Usage: {{ total_usage|ugx }} &nbsp;·&nbsp;
+      Balance: {{ money(total_balance) }}
+    </div>
+    <button class="btn btn-primary">Save Usage</button>
+  </div>
+  {% endif %}
+</form>
+{% endif %}
+
+{% if all_quarters and rows %}
+<div class="fs-6 mt-3">
+  Allocated ({{ filters.year }}): {{ total_allocation|ugx }} &nbsp;·&nbsp;
+  Usage: {{ total_usage|ugx }} &nbsp;·&nbsp;
+  Balance (year end): {{ money(total_balance) }}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if rows %}
+<script type="application/json" id="chart-data">{{ charts|tojson }}</script>
+<script src="{{ url_for('static', filename='chart.umd.min.js') }}"></script>
+<script src="{{ url_for('static', filename='charts.js') }}"></script>
+<script>
+  const charts = JSON.parse(document.getElementById("chart-data").textContent);
+  multiSeries("chart-trend", charts.trend.labels, [
+    { label: "Allocation", values: charts.trend.allocation, type: "bar" },
+    { label: "Usage", values: charts.trend.usage, type: "bar" },
+    { label: "Balance (running)", values: charts.trend.balance, type: "line" },
+  ]);
+  doughnut("chart-utility-usage", charts.utility_usage.labels, charts.utility_usage.values);
+</script>
+{% endif %}
+{% endblock %}

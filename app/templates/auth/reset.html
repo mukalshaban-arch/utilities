@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="fw-bold mb-1">Enter passkey</h3>
+<p class="text-muted small mb-4">Enter the temporary passkey your administrator gave you.</p>
+<form method="post" autocomplete="off">
+  {{ form.hidden_tag() }}
+  <div class="mb-3">
+    {{ form.email.label(class="form-label") }}
+    {{ form.email(class="form-control", autocomplete="off", autocorrect="off", autocapitalize="off", spellcheck="false") }}
+  </div>
+  <div class="mb-3">
+    {{ form.passkey.label(class="form-label") }}
+    {{ form.passkey(class="form-control text-uppercase", placeholder="e.g. K7P2QX9M", autocomplete="off") }}
+  </div>
+  {{ form.submit(class="btn btn-primary w-100") }}
+</form>
+<div class="d-flex justify-content-between small mt-3">
+  <a href="{{ url_for('auth.login') }}">Back to login</a>
+  <a href="{{ url_for('auth.forgot_password') }}">Alert administrator</a>
+</div>
+{% endblock %}

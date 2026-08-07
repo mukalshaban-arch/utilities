@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>New Allocation</h3>
+
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="beneficiary_id" id="beneficiary-id">
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-5">
+      <label class="form-label">Beneficiary</label>
+      <input type="text" id="beneficiary-name" class="form-control" list="beneficiary-list"
+             placeholder="Start typing a name..." autocomplete="off" required>
+      <datalist id="beneficiary-list"></datalist>
+      <div class="form-text" id="beneficiary-status">Only registered beneficiaries can be allocated.</div>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Quarter</label>
+      <select name="quarter" id="quarter" class="form-select">
+        {% for q in [1, 2, 3, 4] %}
+        <option value="{{ q }}" {% if q == quarter %}selected{% endif %}>Q{{ q }} ({{ q|qmonths }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Year</label>
+      <input type="number" name="year" id="year" class="form-control" value="{{ year }}">
+    </div>
+  </div>
+
+  <div id="budget-banner" class="alert alert-secondary d-flex justify-content-between align-items-center py-2 d-none">
+    <span id="budget-text"></span>
+    <a class="small" href="{{ url_for('admin.budgets') }}">Manage budgets</a>
+  </div>
+
+  <div id="meters-panel" class="d-none">
+    <h5>Allocations per Number</h5>
+    <p class="text-muted small">Leave a field blank to leave that number unchanged.</p>
+    <table class="table table-sm align-middle">
+      <thead><tr>
+        <th style="width:18%">Utility</th>
+        <th style="width:26%">Number</th>
+        <th class="text-end">Carried fwd</th>
+        <th style="width:12rem">Allocation (UGX)</th>
+        <th class="text-end">New total pool</th>
+      </tr></thead>
+      <tbody id="meter-rows"></tbody>
+    </table>
+    <button class="btn btn-primary">Save Allocations</button>
+    <a class="btn btn-link" href="{{ url_for('admin.dashboard') }}">Cancel</a>
+  </div>
+
+  <div id="no-meters" class="alert alert-warning d-none">
+    This beneficiary has no meter/phone numbers registered yet.
+  </div>
+</form>
+
+<script>
+  const nameInput = document.getElementById('beneficiary-name');
+  const idInput = document.getElementById('beneficiary-id');
+  const datalist = document.getElementById('beneficiary-list');
+  const status = document.getElementById('beneficiary-status');
+  const panel = document.getElementById('meters-panel');
+  const noMeters = document.getElementById('no-meters');
+  const rows = document.getElementById('meter-rows');
+  const quarter = document.getElementById('quarter');
+  const year = document.getElementById('year');
+  const budgetBanner = document.getElementById('budget-banner');
+  const budgetText = document.getElementById('budget-text');
+
+  let suggestions = [];   // most recent search results
+  let searchTimer = null;
+  let serverRemaining = 0;  // budget minus already-recorded allocations (from server)
+  let hasBudget = false;
+  let amountInputs = [];    // { input, existing } for the meters currently shown
+
+  function ugx(value) {
+    return 'UGX ' + Math.round(value).toLocaleString('en-US');
+  }
+
+  // Show the remaining budget, drawn down live by whatever is being typed.
+  function updateBudgetDisplay() {
+    budgetBanner.classList.remove('d-none');
+    if (!hasBudget) {
+      budgetBanner.className = 'alert alert-secondary d-flex justify-content-between align-items-center py-2';
+      budgetText.innerHTML = 'No budget set for Q' + quarter.value + ' ' + year.value +
+        ' — allocations are not being tracked against a budget.';
+      return;
+    }
+    let delta = 0;
+    for (const a of amountInputs) delta += (Number(a.input.value || 0) - a.existing);
+    const projected = serverRemaining - delta;
+    const over = projected < 0;
+    budgetBanner.className = 'alert d-flex justify-content-between align-items-center py-2 ' +
+      (over ? 'alert-danger' : 'alert-success');
+    budgetText.innerHTML = 'Remaining budget for Q' + quarter.value + ' ' + year.value +
+      ': <strong>' + ugx(projected) + '</strong>' +
+      (over ? ' — over budget (allocation still allowed)' : '');
+  }
+
+  async function fetchBudget() {
+    const url = `{{ url_for('admin.budget_remaining') }}?quarter=${quarter.value}&year=${year.value}`;
+    const data = await (await fetch(url)).json();
+    hasBudget = data.has_budget;
+    serverRemaining = data.remaining;
+    updateBudgetDisplay();
+  }
+
+  function clearMeters(message) {
+    rows.innerHTML = '';
+    idInput.value = '';
+    panel.classList.add('d-none');
+    noMeters.classList.add('d-none');
+    amountInputs = [];
+    status.textContent = message;
+    updateBudgetDisplay();
+  }
+
+  async function search() {
+    const term = nameInput.value.trim();
+    if (!term) {
+      suggestions = [];
+      datalist.innerHTML = '';
+      clearMeters('Only registered beneficiaries can be allocated.');
+      return;
+    }
+
+    const resp = await fetch(`{{ url_for('admin.search_beneficiaries') }}?q=${encodeURIComponent(term)}`);
+    suggestions = await resp.json();
+
+    datalist.innerHTML = '';
+    for (const b of suggestions) {
+      const option = document.createElement('option');
+      option.value = b.name;
+      option.textContent = b.position + (b.label !== b.name ? ' — ' + b.label : '');
+      datalist.appendChild(option);
+    }
+    loadMeters();
+  }
+
+  async function loadMeters() {
+    const match = suggestions.find(b => b.name === nameInput.value);
+    if (!match) {
+      clearMeters('Only registered beneficiaries can be allocated.');
+      return;
+    }
+
+    idInput.value = match.id;
+    status.textContent = match.position + (match.label !== match.name ? ' — ' + match.label : '');
+
+    const url = `/admin/beneficiaries/${match.id}/meters?quarter=${quarter.value}&year=${year.value}`;
+    const meters = await (await fetch(url)).json();
+
+    rows.innerHTML = '';
+    if (!meters.length) {
+      panel.classList.add('d-none');
+      noMeters.classList.remove('d-none');
+      return;
+    }
+
+    noMeters.classList.add('d-none');
+    panel.classList.remove('d-none');
+    amountInputs = [];
+
+    for (const meter of meters) {
+      const tr = document.createElement('tr');
+
+      const utility = document.createElement('td');
+      utility.textContent = meter.utility;
+
+      const number = document.createElement('td');
+      number.innerHTML = '<code></code>';
+      number.firstChild.textContent = meter.number;
+
+      const carries = meter.carry_forward !== null && meter.carry_forward !== undefined;
+      const carry = carries ? Number(meter.carry_forward) : 0;
+
+      const carryCell = document.createElement('td');
+      carryCell.className = 'text-end';
+      carryCell.textContent = carries ? ugx(carry) : '—';
+
+      const amount = document.createElement('td');
+      amount.innerHTML = `<input type="number" step="any" min="0" class="form-control form-control-sm"
+                                 name="amount_${meter.id}" placeholder="0">`;
+      const input = amount.firstElementChild;
+      input.value = meter.amount;
+      amountInputs.push({ input: input, existing: Number(meter.amount || 0) });
+
+      const total = document.createElement('td');
+      total.className = 'text-end fw-semibold';
+
+      const refreshTotal = () => {
+        if (!carries) { total.textContent = '—'; return; }
+        const entered = Number(input.value || 0);
+        total.textContent = ugx(carry + entered);
+      };
+      input.addEventListener('input', () => { refreshTotal(); updateBudgetDisplay(); });
+      refreshTotal();
+
+      tr.append(utility, number, carryCell, amount, total);
+      rows.appendChild(tr);
+    }
+    updateBudgetDisplay();
+  }
+
+  function reloadPeriod() {
+    fetchBudget();
+    loadMeters();
+  }
+
+  // debounce so we don't fire a request per keystroke
+  nameInput.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(search, 200);
+  });
+  quarter.addEventListener('change', reloadPeriod);
+  year.addEventListener('change', reloadPeriod);
+
+  fetchBudget();  // show the quarter's remaining budget on load
+</script>
+{% endblock %}

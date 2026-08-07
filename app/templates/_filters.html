@@ -1,0 +1,68 @@
+{% macro filter_bar(filters, utility_types, positions, csv_endpoint=None, pdf_endpoint=None) %}
+<form method="get" class="row g-2 align-items-end mb-3">
+  <input type="hidden" name="sort" value="{{ filters.sort }}">
+  <input type="hidden" name="direction" value="{{ filters.direction }}">
+
+  <div class="col-auto">
+    <label class="form-label small mb-0">Year</label>
+    <input type="number" name="year" value="{{ filters.year }}" class="form-control form-control-sm" style="width:6rem">
+  </div>
+  <div class="col-auto">
+    <label class="form-label small mb-0">Quarter</label>
+    <select name="quarter" class="form-select form-select-sm">
+      <option value="0" {% if not filters.quarter %}selected{% endif %}>All</option>
+      {% for q in [1, 2, 3, 4] %}
+      <option value="{{ q }}" {% if q == filters.quarter %}selected{% endif %}>Q{{ q }} ({{ q|qmonths }})</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <label class="form-label small mb-0">Utility</label>
+    <select name="utility_type_id" class="form-select form-select-sm">
+      <option value="0">All</option>
+      {% for t in utility_types %}
+      <option value="{{ t.id }}" {% if t.id == filters.utility_type_id %}selected{% endif %}>{{ t.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <label class="form-label small mb-0">Position</label>
+    <select name="position" class="form-select form-select-sm">
+      <option value="">All</option>
+      {% for p in positions %}
+      <option value="{{ p }}" {% if p == filters.position %}selected{% endif %}>{{ p }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <label class="form-label small mb-0">Name</label>
+    <input type="text" name="name" value="{{ filters.name }}" class="form-control form-control-sm"
+           placeholder="Search name...">
+  </div>
+  <div class="col-auto">
+    <button class="btn btn-secondary btn-sm">Apply</button>
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for(request.endpoint) }}">Reset</a>
+    {% if csv_endpoint %}
+    <a class="btn btn-outline-primary btn-sm"
+       href="{{ url_for(csv_endpoint, **request.args) }}">Export CSV</a>
+    {% endif %}
+    {% if pdf_endpoint %}
+    <a class="btn btn-outline-danger btn-sm"
+       href="{{ url_for(pdf_endpoint, **request.args) }}">Export PDF</a>
+    {% endif %}
+  </div>
+</form>
+{% endmacro %}
+
+
+{# Clickable column header: toggles asc/desc and keeps every other filter. #}
+{% macro sort_th(label, key, filters) %}
+{% set active = filters.sort == key %}
+{% set next_direction = 'desc' if (active and filters.direction == 'asc') else 'asc' %}
+<th>
+  <a class="text-decoration-none {% if active %}fw-bold{% else %}text-body{% endif %}"
+     href="{{ url_for(request.endpoint, **dict(request.args, sort=key, direction=next_direction)) }}">
+    {{ label }}{% if active %} {{ '▲' if filters.direction == 'asc' else '▼' }}{% endif %}
+  </a>
+</th>
+{% endmacro %}

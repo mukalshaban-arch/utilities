@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% from "_filters.html" import filter_bar, sort_th %}
+{% block content %}
+<h3>Allocation Summary — {{ period }}</h3>
+
+{{ filter_bar(filters, utility_types, positions) }}
+
+<div class="stat-grid mb-4">
+  <div class="panel">
+    <div class="stat-label">Total Allocated</div>
+    <div class="stat-value">{{ total_allocated|ugx }}</div>
+  </div>
+  <div class="panel">
+    <div class="stat-label">Beneficiaries Allocated</div>
+    <div class="stat-value">{{ beneficiary_count }}</div>
+  </div>
+</div>
+
+{% if charts.utility['values'] or charts.beneficiary['values'] %}
+<div class="row mb-4">
+  <div class="col-md-5">
+    <div class="card"><div class="card-body">
+      <h6 class="card-title text-muted">Allocation by Utility</h6>
+      <div class="chart-box"><canvas id="chart-utility"></canvas></div>
+    </div></div>
+  </div>
+  <div class="col-md-7">
+    <div class="card"><div class="card-body">
+      <h6 class="card-title text-muted">Top Beneficiaries by Allocation</h6>
+      <div class="chart-box"><canvas id="chart-beneficiary"></canvas></div>
+    </div></div>
+  </div>
+</div>
+{% endif %}
+
+<h5>Distribution by Utility Type</h5>
+<table class="table table-sm">
+  <thead>
+    <tr>
+      {{ sort_th('Utility', 'utility', filters) }}
+      {{ sort_th('Allocated', 'allocated', filters) }}
+      <th>Share</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in by_utility %}
+    <tr>
+      <td>{{ row.name }}</td>
+      <td>{{ row.allocated|ugx }}</td>
+      <td>{{ "%.1f"|format(row.share) }}%</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr class="fw-bold">
+      <td>Total</td>
+      <td>{{ total_allocated|ugx }}</td>
+      <td></td>
+    </tr>
+  </tfoot>
+</table>
+
+<h5 class="mt-4">Distribution by Beneficiary</h5>
+<table class="table table-sm">
+  <thead>
+    <tr>
+      {{ sort_th('Beneficiary', 'beneficiary', filters) }}
+      {{ sort_th('Position', 'position', filters) }}
+      {{ sort_th('Allocated', 'allocated', filters) }}
+      <th>Share</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in by_beneficiary %}
+    <tr>
+      <td>{{ row.name }}</td>
+      <td>{{ row.position }}</td>
+      <td>{{ row.allocated|ugx }}</td>
+      <td>{{ "%.1f"|format(row.share) }}%</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="text-muted">No beneficiaries match these filters.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+{% block scripts %}
+<script type="application/json" id="chart-data">{{ charts|tojson }}</script>
+<script src="{{ url_for('static', filename='chart.umd.min.js') }}"></script>
+<script src="{{ url_for('static', filename='charts.js') }}"></script>
+<script>
+  const charts = JSON.parse(document.getElementById("chart-data").textContent);
+  doughnut("chart-utility", charts.utility.labels, charts.utility.values);
+  bar("chart-beneficiary", charts.beneficiary.labels, charts.beneficiary.values, "Allocated (UGX)");
+</script>
+{% endblock %}

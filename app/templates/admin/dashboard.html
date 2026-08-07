@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+
+<div class="d-flex flex-wrap gap-2 mb-4">
+  <a class="btn btn-primary btn-sm" href="{{ url_for('admin.new_allocation') }}">+ New Allocation</a>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin.budgets') }}">Set Quarter Budget</a>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin.new_beneficiary') }}">Register Beneficiary</a>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin.major_accounts') }}">Record Usage</a>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('reports.quarterly') }}">Reports</a>
+</div>
+
+{% if pending_resets %}
+<div class="alert alert-warning d-flex justify-content-between align-items-center">
+  <span>{{ pending_resets }} password reset request(s) awaiting a passkey.</span>
+  <a class="btn btn-sm btn-warning" href="{{ url_for('admin.password_resets') }}">Review</a>
+</div>
+{% endif %}
+
+<div class="stat-grid mb-4">
+  {% from "_icons.html" import icon %}
+  <div class="stat-card">
+    <div class="stat-icon bg-blue">{{ icon('summary') }}</div>
+    <div>
+      <div class="stat-label">Quarter Budget (Q{{ quarter }} {{ year }})</div>
+      <div class="stat-value">{{ quarter_budget|ugx }}</div>
+      <div class="stat-sub"><a href="{{ url_for('admin.budgets') }}">Set budget</a></div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon {{ 'bg-red' if quarter_balance < 0 else 'bg-green' }}">{{ icon('major') }}</div>
+    <div>
+      <div class="stat-label">Budget Balance (Q{{ quarter }})</div>
+      <div class="stat-value">{{ quarter_balance|ugx }}</div>
+      <div class="stat-sub">budget − allocated this quarter</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon bg-blue">{{ icon('beneficiaries') }}</div>
+    <div>
+      <div class="stat-label">Beneficiaries</div>
+      <div class="stat-value">{{ beneficiary_count }}</div>
+      <div class="stat-sub">{{ major_account_count }} major accounts</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon bg-green">{{ icon('summary') }}</div>
+    <div>
+      <div class="stat-label">Allocated ({{ year }})</div>
+      <div class="stat-value">{{ allocated_year|ugx }}</div>
+      <div class="stat-sub">{{ allocation_count }} allocations on record</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon bg-orange">{{ icon('utility') }}</div>
+    <div>
+      <div class="stat-label">Usage ({{ year }})</div>
+      <div class="stat-value">{{ usage_year|ugx }}</div>
+      <div class="stat-sub">major accounts, water &amp; power</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon {{ 'bg-red' if outstanding < 0 else 'bg-teal' }}">{{ icon('major') }}</div>
+    <div>
+      <div class="stat-label">Outstanding balance</div>
+      <div class="stat-value">{{ outstanding|ugx }}</div>
+      <div class="stat-sub">carried-forward standing</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="panel h-100">
+      <h2 class="panel-title">Allocation by Utility — {{ year }}</h2>
+      {% if charts.utility['values'] %}
+      <div class="chart-box"><canvas id="chart-utility"></canvas></div>
+      {% else %}
+      <p class="text-muted small mb-0">No allocations recorded for {{ year }} yet.</p>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="panel h-100">
+      <h2 class="panel-title">Allocation by Quarter — {{ year }}</h2>
+      {% if charts.quarters['values'] | sum %}
+      <div class="chart-box"><canvas id="chart-quarters"></canvas></div>
+      {% else %}
+      <p class="text-muted small mb-0">No allocations recorded for {{ year }} yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="panel mt-3">
+  <h2 class="panel-title">Recent Activity</h2>
+  <ul class="feed">
+    {% for e in recent %}
+    <li>
+      <span class="badge-dot" style="background: {{ '#59a14f' if e.action == 'Allocated' else '#f28e2b' if 'Updated' in e.action or 'usage' in e.action else '#4e79a7' if 'Generated' in e.action else '#94a3b8' }}"></span>
+      <div class="flex-grow-1">
+        <strong>{{ e.user.name }}</strong> · {{ e.action }}
+        {% if e.beneficiary_name %}<span class="text-muted">— {{ e.beneficiary_name }}{% if e.number %} ({{ e.number }}){% endif %}</span>{% endif %}
+        {% if e.amount is not none %}<span class="text-muted">· {{ e.amount|ugx }}</span>{% endif %}
+      </div>
+      <span class="feed-time">{{ e.created_at|localtime }}</span>
+    </li>
+    {% else %}
+    <li class="text-muted">No activity recorded yet.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="application/json" id="chart-data">{{ charts|tojson }}</script>
+<script src="{{ url_for('static', filename='chart.umd.min.js') }}"></script>
+<script src="{{ url_for('static', filename='charts.js') }}"></script>
+<script>
+  const charts = JSON.parse(document.getElementById("chart-data").textContent);
+  if (charts.utility.values.length) doughnut("chart-utility", charts.utility.labels, charts.utility.values);
+  if (charts.quarters.values.some(v => v > 0)) bar("chart-quarters", charts.quarters.labels, charts.quarters.values, "Allocated (UGX)");
+</script>
+{% endblock %}

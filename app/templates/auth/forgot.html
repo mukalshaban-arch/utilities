@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="fw-bold mb-1">Forgot password</h3>
+<p class="text-muted small mb-4">
+  Enter your email and your administrator will be alerted. They will generate a
+  temporary passkey and give it to you directly, then you can set a new password.
+</p>
+<form method="post" autocomplete="off">
+  {{ form.hidden_tag() }}
+  <div class="mb-3">
+    {{ form.email.label(class="form-label") }}
+    {{ form.email(class="form-control", autocomplete="off", autocorrect="off", autocapitalize="off", spellcheck="false") }}
+    {% for error in form.email.errors %}
+    <div class="text-danger small">{{ error }}</div>
+    {% endfor %}
+  </div>
+  {{ form.submit(class="btn btn-primary w-100") }}
+</form>
+<div class="d-flex justify-content-between small mt-3">
+  <a href="{{ url_for('auth.login') }}">Back to login</a>
+  <a href="{{ url_for('auth.reset_password') }}">I have a passkey</a>
+</div>
+{% endblock %}
