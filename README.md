@@ -1,7 +1,7 @@
 # Utility Manager
 
 [![Tests](https://github.com/mukalshaban-arch/utilities/actions/workflows/tests.yml/badge.svg)](https://github.com/mukalshaban-arch/utilities/actions/workflows/tests.yml)
-[![Coverage](https://codecov.io/gh/mukalshaban-arch/utilities/branch/main/graph/badge.svg)](https://codecov.io/gh/mukalshaban-arch/utilities)
+[![Coverage](https://codecov.io/gh/mukalshaban-arch/utilities/branch/master/graph/badge.svg)](https://codecov.io/gh/mukalshaban-arch/utilities)
 [![Python](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-unlicensed-lightgrey)](https://github.com/mukalshaban-arch/utilities)
 
