@@ -1,9 +1,9 @@
 # Utility Manager
 
 [![Tests](https://github.com/mukalshaban-arch/utilities/actions/workflows/tests.yml/badge.svg)](https://github.com/mukalshaban-arch/utilities/actions/workflows/tests.yml)
-[![Coverage](https://img.shields.io/badge/coverage-report-informational)](https://github.com/mukalshaban-arch/utilities/actions/workflows/tests.yml)
+[![Coverage](https://codecov.io/gh/mukalshaban-arch/utilities/branch/main/graph/badge.svg)](https://codecov.io/gh/mukalshaban-arch/utilities)
 [![Python](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-unlicensed-lightgrey)](#)
+[![License](https://img.shields.io/badge/license-unlicensed-lightgrey)](https://github.com/mukalshaban-arch/utilities)
 
 A quarterly utility-allocation and budget-tracking system for an organisation that distributes
 money to individuals and facilities to cover utilities — power, water, mobile airtime, office
