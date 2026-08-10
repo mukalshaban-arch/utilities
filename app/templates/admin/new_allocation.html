@@ -8,14 +8,14 @@
 
   <div class="row g-3 mb-3">
     <div class="col-md-5">
-      <label class="form-label">Beneficiary</label>
+      <label class="form-label" for="beneficiary-name">Beneficiary</label>
       <input type="text" id="beneficiary-name" class="form-control" list="beneficiary-list"
              placeholder="Start typing a name..." autocomplete="off" required>
       <datalist id="beneficiary-list"></datalist>
       <div class="form-text" id="beneficiary-status">Only registered beneficiaries can be allocated.</div>
     </div>
     <div class="col-md-2">
-      <label class="form-label">Quarter</label>
+      <label class="form-label" for="quarter">Quarter</label>
       <select name="quarter" id="quarter" class="form-select">
         {% for q in [1, 2, 3, 4] %}
         <option value="{{ q }}" {% if q == quarter %}selected{% endif %}>Q{{ q }} ({{ q|qmonths }})</option>
@@ -23,7 +23,7 @@
       </select>
     </div>
     <div class="col-md-2">
-      <label class="form-label">Year</label>
+      <label class="form-label" for="year">Year</label>
       <input type="number" name="year" id="year" class="form-control" value="{{ year }}">
     </div>
   </div>

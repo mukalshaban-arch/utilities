@@ -4,12 +4,12 @@
   <input type="hidden" name="direction" value="{{ filters.direction }}">
 
   <div class="col-auto">
-    <label class="form-label small mb-0">Year</label>
-    <input type="number" name="year" value="{{ filters.year }}" class="form-control form-control-sm" style="width:6rem">
+    <label class="form-label small mb-0" for="filter-year">Year</label>
+    <input type="number" id="filter-year" name="year" value="{{ filters.year }}" class="form-control form-control-sm" style="width:6rem">
   </div>
   <div class="col-auto">
-    <label class="form-label small mb-0">Quarter</label>
-    <select name="quarter" class="form-select form-select-sm">
+    <label class="form-label small mb-0" for="filter-quarter">Quarter</label>
+    <select id="filter-quarter" name="quarter" class="form-select form-select-sm">
       <option value="0" {% if not filters.quarter %}selected{% endif %}>All</option>
       {% for q in [1, 2, 3, 4] %}
       <option value="{{ q }}" {% if q == filters.quarter %}selected{% endif %}>Q{{ q }} ({{ q|qmonths }})</option>
@@ -17,8 +17,8 @@
     </select>
   </div>
   <div class="col-auto">
-    <label class="form-label small mb-0">Utility</label>
-    <select name="utility_type_id" class="form-select form-select-sm">
+    <label class="form-label small mb-0" for="filter-utility_type_id">Utility</label>
+    <select id="filter-utility_type_id" name="utility_type_id" class="form-select form-select-sm">
       <option value="0">All</option>
       {% for t in utility_types %}
       <option value="{{ t.id }}" {% if t.id == filters.utility_type_id %}selected{% endif %}>{{ t.name }}</option>
@@ -26,8 +26,8 @@
     </select>
   </div>
   <div class="col-auto">
-    <label class="form-label small mb-0">Position</label>
-    <select name="position" class="form-select form-select-sm">
+    <label class="form-label small mb-0" for="filter-position">Position</label>
+    <select id="filter-position" name="position" class="form-select form-select-sm">
       <option value="">All</option>
       {% for p in positions %}
       <option value="{{ p }}" {% if p == filters.position %}selected{% endif %}>{{ p }}</option>
@@ -35,8 +35,8 @@
     </select>
   </div>
   <div class="col-auto">
-    <label class="form-label small mb-0">Name</label>
-    <input type="text" name="name" value="{{ filters.name }}" class="form-control form-control-sm"
+    <label class="form-label small mb-0" for="filter-name">Name</label>
+    <input type="text" id="filter-name" name="name" value="{{ filters.name }}" class="form-control form-control-sm"
            placeholder="Search name...">
   </div>
   <div class="col-auto">

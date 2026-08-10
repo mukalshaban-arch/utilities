@@ -12,12 +12,12 @@
 
 <form method="get" class="row g-2 align-items-end mb-3">
   <div class="col-auto">
-    <label class="form-label small mb-0">Year</label>
-    <input type="number" name="year" value="{{ filters.year }}" class="form-control form-control-sm" style="width:6rem">
+    <label class="form-label small mb-0" for="ledger-year">Year</label>
+    <input type="number" id="ledger-year" name="year" value="{{ filters.year }}" class="form-control form-control-sm" style="width:6rem">
   </div>
   <div class="col-auto">
-    <label class="form-label small mb-0">Quarter</label>
-    <select name="quarter" class="form-select form-select-sm">
+    <label class="form-label small mb-0" for="ledger-quarter">Quarter</label>
+    <select id="ledger-quarter" name="quarter" class="form-select form-select-sm">
       <option value="0" {% if all_quarters %}selected{% endif %}>All</option>
       {% for q in [1, 2, 3, 4] %}
       <option value="{{ q }}" {% if q == filters.quarter %}selected{% endif %}>Q{{ q }} ({{ q|qmonths }})</option>
@@ -25,8 +25,8 @@
     </select>
   </div>
   <div class="col-auto">
-    <label class="form-label small mb-0">Major Account</label>
-    <select name="account" class="form-select form-select-sm">
+    <label class="form-label small mb-0" for="ledger-account">Major Account</label>
+    <select id="ledger-account" name="account" class="form-select form-select-sm">
       <option value="0">All</option>
       {% for id, label in accounts %}
       <option value="{{ id }}" {% if id == filters.account %}selected{% endif %}>{{ label }}</option>
@@ -34,8 +34,8 @@
     </select>
   </div>
   <div class="col-auto">
-    <label class="form-label small mb-0">Utility</label>
-    <select name="utility" class="form-select form-select-sm">
+    <label class="form-label small mb-0" for="ledger-utility">Utility</label>
+    <select id="ledger-utility" name="utility" class="form-select form-select-sm">
       <option value="">All</option>
       {% for u in utilities %}
       <option value="{{ u }}" {% if u == filters.utility %}selected{% endif %}>{{ u }}</option>

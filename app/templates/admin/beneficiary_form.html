@@ -7,12 +7,12 @@
 
   <div class="row g-3 mb-4">
     <div class="col-md-4">
-      <label class="form-label">Name</label>
-      <input type="text" name="name" class="form-control" required
+      <label class="form-label" for="beneficiary-name">Name</label>
+      <input type="text" id="beneficiary-name" name="name" class="form-control" required
              value="{{ beneficiary.name if beneficiary else '' }}">
     </div>
     <div class="col-md-4">
-      <label class="form-label">Position</label>
+      <label class="form-label" for="position">Position</label>
       <select name="position" id="position" class="form-select" required>
         {% for p in positions %}
         <option value="{{ p }}" {% if beneficiary and beneficiary.position == p %}selected{% endif %}>{{ p }}</option>
@@ -20,8 +20,8 @@
       </select>
     </div>
     <div class="col-md-4" id="facility-wrap">
-      <label class="form-label">Facility</label>
-      <select name="facility" class="form-select">
+      <label class="form-label" for="facility">Facility</label>
+      <select name="facility" id="facility" class="form-select">
         <option value="">—</option>
         {% for f in facilities %}
         <option value="{{ f }}" {% if beneficiary and beneficiary.facility == f %}selected{% endif %}>{{ f }}</option>
@@ -31,8 +31,8 @@
     </div>
 
     <div class="col-md-4" id="department-wrap">
-      <label class="form-label">Department</label>
-      <select name="department" class="form-select">
+      <label class="form-label" for="department">Department</label>
+      <select name="department" id="department" class="form-select">
         <option value="">—</option>
         {% for d in departments %}
         <option value="{{ d }}" {% if beneficiary and beneficiary.department == d %}selected{% endif %}>{{ d }}</option>
