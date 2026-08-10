@@ -1,5 +1,5 @@
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -7,6 +7,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db
 
 ROLES = ("admin",)
+
+
+def utcnow():
+    """Naive UTC timestamp for storage - same value datetime.utcnow() gave, without
+    calling the deprecated, timezone-unaware alias (SonarQube python:S6903)."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
 
 MAJOR_ACCOUNTS = "Major Accounts"
 
@@ -148,7 +155,7 @@ class QuarterBudget(db.Model):
     year = db.Column(db.Integer, nullable=False)
     amount = db.Column(db.Numeric(14, 2), nullable=False)
     created_by_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
 
     __table_args__ = (db.UniqueConstraint("quarter", "year", name="uq_quarter_budget"),)
 
@@ -180,7 +187,7 @@ class ActivityLog(db.Model):
     """
 
     id = db.Column(db.Integer, primary_key=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=utcnow, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     action = db.Column(db.String(40), nullable=False)
 
@@ -210,7 +217,7 @@ class PasswordResetRequest(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    requested_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    requested_at = db.Column(db.DateTime, nullable=False, default=utcnow, index=True)
 
     status = db.Column(db.String(20), nullable=False, default="pending")  # pending/issued/used/cancelled
 
@@ -228,14 +235,14 @@ class PasswordResetRequest(db.Model):
         passkey = "".join(secrets.choice(PASSKEY_ALPHABET) for _ in range(8))
         self.passkey_hash = generate_password_hash(passkey)
         self.status = "issued"
-        self.issued_at = datetime.utcnow()
+        self.issued_at = utcnow()
         self.issued_by_id = admin.id
         self.expires_at = self.issued_at + timedelta(minutes=PASSKEY_EXPIRY_MINUTES)
         return passkey
 
     @property
     def is_expired(self):
-        return bool(self.expires_at and datetime.utcnow() > self.expires_at)
+        return bool(self.expires_at and utcnow() > self.expires_at)
 
     def verify(self, passkey):
         return (
@@ -253,7 +260,7 @@ class LoginLog(db.Model):
     """
 
     id = db.Column(db.Integer, primary_key=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=utcnow, index=True)
     email = db.Column(db.String(120), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))  # null if no such account
     success = db.Column(db.Boolean, nullable=False)
@@ -270,7 +277,7 @@ class LoginLog(db.Model):
 
 def _recent_failures(email):
     """Failed attempts inside the lockout window, newest first."""
-    window_start = datetime.utcnow() - timedelta(minutes=LOCKOUT_MINUTES)
+    window_start = utcnow() - timedelta(minutes=LOCKOUT_MINUTES)
 
     last_success = (
         db.session.query(db.func.max(LoginLog.created_at))
@@ -310,7 +317,7 @@ def lockout_seconds_remaining(email):
         return 0
 
     unlock_at = failures[0].created_at + timedelta(minutes=LOCKOUT_MINUTES)
-    return max(0, (unlock_at - datetime.utcnow()).total_seconds())
+    return max(0, (unlock_at - utcnow()).total_seconds())
 
 
 def record_login(email, user, success, ip_address=None, blocked=False):

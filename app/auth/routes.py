@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required
 
-from datetime import datetime
 from math import ceil
 
 from app.extensions import db
@@ -12,6 +11,7 @@ from app.models import (
     lockout_seconds_remaining,
     MAX_LOGIN_ATTEMPTS,
     LOCKOUT_MINUTES,
+    utcnow,
 )
 from app.auth.forms import LoginForm, ForgotPasswordForm, PasskeyForm, NewPasswordForm
 
@@ -149,7 +149,7 @@ def new_password():
     if form.validate_on_submit():
         reset.user.set_password(form.password.data)
         reset.status = "used"
-        reset.used_at = datetime.utcnow()
+        reset.used_at = utcnow()
         db.session.commit()
         session.pop("reset_request_id", None)
 
