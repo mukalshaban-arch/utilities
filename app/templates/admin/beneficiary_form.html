@@ -52,13 +52,13 @@
       <tr>
         <td>
           <input type="hidden" name="meter_id" value="{{ meter.id }}">
-          <select name="meter_utility" class="form-select form-select-sm">
+          <select name="meter_utility" aria-label="Utility" class="form-select form-select-sm">
             {% for t in utility_types %}
             <option value="{{ t.id }}" {% if t.id == meter.utility_type_id %}selected{% endif %}>{{ t.name }}</option>
             {% endfor %}
           </select>
         </td>
-        <td><input type="text" name="meter_number" class="form-control form-control-sm" value="{{ meter.number }}"></td>
+        <td><input type="text" name="meter_number" aria-label="Number" class="form-control form-control-sm" value="{{ meter.number }}"></td>
         <td><button type="button" class="btn btn-outline-danger btn-sm remove-row">&times;</button></td>
       </tr>
       {% endfor %}
@@ -76,13 +76,13 @@
   <tr>
     <td>
       <input type="hidden" name="meter_id" value="">
-      <select name="meter_utility" class="form-select form-select-sm">
+      <select name="meter_utility" aria-label="Utility" class="form-select form-select-sm">
         {% for t in utility_types %}
         <option value="{{ t.id }}">{{ t.name }}</option>
         {% endfor %}
       </select>
     </td>
-    <td><input type="text" name="meter_number" class="form-control form-control-sm" placeholder="e.g. 0412345678"></td>
+    <td><input type="text" name="meter_number" aria-label="Number" class="form-control form-control-sm" placeholder="e.g. 0412345678"></td>
     <td><button type="button" class="btn btn-outline-danger btn-sm remove-row">&times;</button></td>
   </tr>
 </template>

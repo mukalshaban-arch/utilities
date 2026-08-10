@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_filters.html" import filter_bar, sort_th %}
+{% from "_filters.html" import filter_bar, sort_link %}
 {% block content %}
 <h3>Allocation Summary — {{ period }}</h3>
 
@@ -37,8 +37,8 @@
 <table class="table table-sm">
   <thead>
     <tr>
-      {{ sort_th('Utility', 'utility', filters) }}
-      {{ sort_th('Allocated', 'allocated', filters) }}
+      <th>{{ sort_link('Utility', 'utility', filters) }}</th>
+      <th>{{ sort_link('Allocated', 'allocated', filters) }}</th>
       <th>Share</th>
     </tr>
   </thead>
@@ -64,9 +64,9 @@
 <table class="table table-sm">
   <thead>
     <tr>
-      {{ sort_th('Beneficiary', 'beneficiary', filters) }}
-      {{ sort_th('Position', 'position', filters) }}
-      {{ sort_th('Allocated', 'allocated', filters) }}
+      <th>{{ sort_link('Beneficiary', 'beneficiary', filters) }}</th>
+      <th>{{ sort_link('Position', 'position', filters) }}</th>
+      <th>{{ sort_link('Allocated', 'allocated', filters) }}</th>
       <th>Share</th>
     </tr>
   </thead>

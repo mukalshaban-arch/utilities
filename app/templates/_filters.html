@@ -55,14 +55,15 @@
 {% endmacro %}
 
 
-{# Clickable column header: toggles asc/desc and keeps every other filter. #}
-{% macro sort_th(label, key, filters) %}
+{# Clickable sort link for a column header. The caller wraps this in <th>...</th>
+   directly (rather than the macro rendering the <th> itself) so the table's headers
+   are literal markup in each page's source - static HTML/accessibility scanners
+   that don't expand Jinja macros can then see them. #}
+{% macro sort_link(label, key, filters) %}
 {% set active = filters.sort == key %}
 {% set next_direction = 'desc' if (active and filters.direction == 'asc') else 'asc' %}
-<th>
-  <a class="text-decoration-none {% if active %}fw-bold{% else %}text-body{% endif %}"
-     href="{{ url_for(request.endpoint, **dict(request.args, sort=key, direction=next_direction)) }}">
-    {{ label }}{% if active %} {{ '▲' if filters.direction == 'asc' else '▼' }}{% endif %}
-  </a>
-</th>
+<a class="text-decoration-none {% if active %}fw-bold{% else %}text-body{% endif %}"
+   href="{{ url_for(request.endpoint, **dict(request.args, sort=key, direction=next_direction)) }}">
+  {{ label }}{% if active %} {{ '▲' if filters.direction == 'asc' else '▼' }}{% endif %}
+</a>
 {% endmacro %}

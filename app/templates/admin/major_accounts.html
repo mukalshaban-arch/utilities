@@ -150,7 +150,7 @@
         <td class="text-end fw-semibold">{{ money(line.pool) }}</td>
         <td>
           <input type="number" step="any" min="0" class="form-control form-control-sm"
-                 name="usage_{{ line.meter.id }}"
+                 name="usage_{{ line.meter.id }}" aria-label="Usage for {{ line.meter.number }}"
                  value="{{ '%0.2f'|format(line.usage) if line.usage else '' }}" placeholder="0">
         </td>
         <td class="text-end fw-semibold">{{ money(line.balance) }}</td>
