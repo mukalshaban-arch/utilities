@@ -4,12 +4,16 @@ from tests.conftest import make_user, make_utility_type, make_beneficiary, make_
 
 
 def allocate(db, meter, quarter, year, amount, admin_id=1):
-    db.session.add(Allocation(meter_id=meter.id, quarter=quarter, year=year, amount=amount, created_by_id=admin_id))
+    db.session.add(
+        Allocation(meter_id=meter.id, quarter=quarter, year=year, amount=amount, created_by_id=admin_id)
+    )
     db.session.commit()
 
 
 def use(db, meter, quarter, year, amount, admin_id=1):
-    db.session.add(Usage(meter_id=meter.id, quarter=quarter, year=year, amount=amount, created_by_id=admin_id))
+    db.session.add(
+        Usage(meter_id=meter.id, quarter=quarter, year=year, amount=amount, created_by_id=admin_id)
+    )
     db.session.commit()
 
 
@@ -24,16 +28,16 @@ def test_the_users_worked_example(db):
     use(db, meter, 1, 2026, 2_500_000)
 
     q1 = meter_ledger(meter.id, 2026, 1)
-    assert q1["pool"] == 5_000_000       # carry-in 0 + allocation 5M
+    assert q1["pool"] == 5_000_000  # carry-in 0 + allocation 5M
     assert q1["usage"] == 2_500_000
-    assert q1["balance"] == 2_500_000    # carries forward
+    assert q1["balance"] == 2_500_000  # carries forward
 
     # Q2: admin allocates another 5M
     allocate(db, meter, 2, 2026, 5_000_000)
     q2 = meter_ledger(meter.id, 2026, 2)
     assert q2["carry_in"] == 2_500_000
-    assert q2["pool"] == 7_500_000       # 2.5M carried + 5M fresh
-    assert q2["balance"] == 7_500_000    # no usage yet this quarter
+    assert q2["pool"] == 7_500_000  # 2.5M carried + 5M fresh
+    assert q2["balance"] == 7_500_000  # no usage yet this quarter
 
 
 def test_deficit_carries_as_negative(db):
@@ -77,7 +81,7 @@ def test_eligibility_rules(db):
     staff_water = make_meter(db, staff, water, "WM-2")
 
     assert is_carryforward_meter(hq_water) is True
-    assert is_carryforward_meter(hq_phone) is False   # phone is excluded
+    assert is_carryforward_meter(hq_phone) is False  # phone is excluded
     assert is_carryforward_meter(staff_water) is False  # not a major account
 
 
@@ -111,7 +115,7 @@ def test_major_accounts_page_only_lists_eligible_meters(client, db):
 
     body = client.get("/admin/major-accounts?year=2026&quarter=3").data.decode()
 
-    assert "WM-HQ-1" in body        # water shows
+    assert "WM-HQ-1" in body  # water shows
     assert "0700111222" not in body  # phone does not
 
 
@@ -174,10 +178,10 @@ def test_all_quarters_report_shows_progression_with_carryforward(client, db):
 
     body = client.get("/admin/major-accounts/report.csv?year=2026&quarter=0").data.decode()
 
-    assert "Quarter" in body        # the extra column
-    assert "Q3 2026" in body        # the quarter with allocation/usage
-    assert "Q4 2026" in body        # carry-forward keeps Q4 non-empty
-    assert "Q1 2026" not in body    # empty quarters are skipped
+    assert "Quarter" in body  # the extra column
+    assert "Q3 2026" in body  # the quarter with allocation/usage
+    assert "Q4 2026" in body  # carry-forward keeps Q4 non-empty
+    assert "Q1 2026" not in body  # empty quarters are skipped
     assert "Q2 2026" not in body
 
 
@@ -187,7 +191,7 @@ def test_all_quarters_total_balance_is_year_end_standing(client, db):
     login(client, "ada@example.com", "pw")
 
     body = client.get("/admin/major-accounts/report.csv?year=2026&quarter=0").data.decode()
-    total_line = [l for l in body.splitlines() if l.startswith("Total")][-1]
+    total_line = [line for line in body.splitlines() if line.startswith("Total")][-1]
 
     # Total row: allocation 10M, usage 2M, year-end balance 3M+4M+1M = 8M
     assert total_line == "Total,,,,,10000000.00,,2000000.00,8000000.00"
@@ -198,7 +202,7 @@ def test_single_quarter_total_row_has_allocation_and_balance(client, db):
     login(client, "ada@example.com", "pw")
 
     body = client.get("/admin/major-accounts/report.csv?year=2026&quarter=3").data.decode()
-    total_line = [l for l in body.splitlines() if l.startswith("Total")][-1]
+    total_line = [line for line in body.splitlines() if line.startswith("Total")][-1]
 
     # Q3: allocation 10M, usage 2M, balance 8M
     assert total_line == "Total,,,,,10000000.00,,2000000.00,8000000.00"
@@ -283,7 +287,8 @@ def test_ledger_charts_trend_and_utility_split(client, db):
     # Q3 balance = 5-2 + 4 + 1 = 8M, and it carries into Q4 unchanged
     assert data["trend"]["balance"] == [0.0, 0.0, 8_000_000.0, 8_000_000.0]
     # usage split: only HQ water was used
-    assert dict(zip(data["utility_usage"]["labels"], data["utility_usage"]["values"]))["Water"] == 2_000_000.0
+    zipped = dict(zip(data["utility_usage"]["labels"], data["utility_usage"]["values"], strict=True))
+    assert zipped["Water"] == 2_000_000.0
 
 
 def test_ledger_charts_respect_utility_filter(client, db):
@@ -298,7 +303,7 @@ def test_ledger_charts_respect_utility_filter(client, db):
 
 
 def test_summary_page_embeds_charts(client, db):
-    admin = make_user(db, "Ada", "ada@example.com", "pw", "admin")
+    make_user(db, "Ada", "ada@example.com", "pw", "admin")
     water = make_utility_type(db, "Water")
     beneficiary = make_beneficiary(db, "HQ", position="Major Accounts", facility="HQ")
     meter = make_meter(db, beneficiary, water, "WM-1")
@@ -318,7 +323,7 @@ def test_allocation_form_meters_endpoint_exposes_carry_forward(client, db):
     water = make_utility_type(db, "Water")
     phone = make_utility_type(db, "Office Phone Airtime")
     water_meter = make_meter(db, hq, water, "WM-1")
-    phone_meter = make_meter(db, hq, phone, "0700111222")
+    make_meter(db, hq, phone, "0700111222")  # registered but excluded from carry-forward
     allocate(db, water_meter, 1, 2026, 5_000_000)
     use(db, water_meter, 1, 2026, 2_500_000)
     login(client, "ada@example.com", "pw")
@@ -326,5 +331,5 @@ def test_allocation_form_meters_endpoint_exposes_carry_forward(client, db):
     meters = client.get(f"/admin/beneficiaries/{hq.id}/meters?quarter=2&year=2026").get_json()
     by_number = {m["number"]: m for m in meters}
 
-    assert by_number["WM-1"]["carry_forward"] == "2500000.00"   # water carries
-    assert by_number["0700111222"]["carry_forward"] is None      # phone does not
+    assert by_number["WM-1"]["carry_forward"] == "2500000.00"  # water carries
+    assert by_number["0700111222"]["carry_forward"] is None  # phone does not

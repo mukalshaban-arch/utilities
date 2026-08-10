@@ -92,9 +92,7 @@ def forgot_password():
         user = User.query.filter_by(email=form.email.data).first()
 
         if user:
-            pending = PasswordResetRequest.query.filter_by(
-                user_id=user.id, status="pending"
-            ).first()
+            pending = PasswordResetRequest.query.filter_by(user_id=user.id, status="pending").first()
             if not pending:
                 db.session.add(PasswordResetRequest(user_id=user.id))
                 db.session.commit()

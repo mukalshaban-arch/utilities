@@ -10,10 +10,16 @@ def test_summary_shows_allocations_only(client, db):
     power_meter = make_meter(db, beneficiary, power, "PM-001")
     water_meter = make_meter(db, beneficiary, water, "WM-001")
 
-    db.session.add(Allocation(meter_id=power_meter.id, quarter=2, year=2026, amount=300000, created_by_id=admin.id))
-    db.session.add(Allocation(meter_id=water_meter.id, quarter=2, year=2026, amount=100000, created_by_id=admin.id))
+    db.session.add(
+        Allocation(meter_id=power_meter.id, quarter=2, year=2026, amount=300000, created_by_id=admin.id)
+    )
+    db.session.add(
+        Allocation(meter_id=water_meter.id, quarter=2, year=2026, amount=100000, created_by_id=admin.id)
+    )
     # another quarter - must be excluded
-    db.session.add(Allocation(meter_id=power_meter.id, quarter=3, year=2026, amount=999000, created_by_id=admin.id))
+    db.session.add(
+        Allocation(meter_id=power_meter.id, quarter=3, year=2026, amount=999000, created_by_id=admin.id)
+    )
     db.session.commit()
 
     login(client, "ada@example.com", "pw")

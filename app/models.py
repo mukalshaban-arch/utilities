@@ -49,10 +49,7 @@ CARRYFORWARD_UTILITIES = ("Power", "Water")
 
 
 def is_carryforward_meter(meter):
-    return (
-        meter.beneficiary.position == MAJOR_ACCOUNTS
-        and meter.utility_type.name in CARRYFORWARD_UTILITIES
-    )
+    return meter.beneficiary.position == MAJOR_ACCOUNTS and meter.utility_type.name in CARRYFORWARD_UTILITIES
 
 
 class User(UserMixin, db.Model):
@@ -136,9 +133,7 @@ class Allocation(db.Model):
 
     meter = db.relationship("Meter")
 
-    __table_args__ = (
-        db.UniqueConstraint("meter_id", "quarter", "year", name="uq_allocation_period"),
-    )
+    __table_args__ = (db.UniqueConstraint("meter_id", "quarter", "year", name="uq_allocation_period"),)
 
 
 class QuarterBudget(db.Model):
@@ -155,9 +150,7 @@ class QuarterBudget(db.Model):
     created_by_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    __table_args__ = (
-        db.UniqueConstraint("quarter", "year", name="uq_quarter_budget"),
-    )
+    __table_args__ = (db.UniqueConstraint("quarter", "year", name="uq_quarter_budget"),)
 
 
 class Usage(db.Model):
@@ -176,9 +169,7 @@ class Usage(db.Model):
 
     meter = db.relationship("Meter")
 
-    __table_args__ = (
-        db.UniqueConstraint("meter_id", "quarter", "year", name="uq_usage_period"),
-    )
+    __table_args__ = (db.UniqueConstraint("meter_id", "quarter", "year", name="uq_usage_period"),)
 
 
 class ActivityLog(db.Model):

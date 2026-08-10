@@ -3,6 +3,7 @@
 Backups use pg_dump's custom format (-Fc): compressed, and restorable with
 pg_restore. See BACKUP.md for the restore procedure.
 """
+
 import os
 import shutil
 import subprocess
@@ -69,12 +70,18 @@ def create_backup():
 
     command = [
         pg_dump_path(),
-        "--host", url.host or "localhost",
-        "--port", str(url.port or 5432),
-        "--username", url.username or "postgres",
-        "--dbname", url.database,
-        "--format", "custom",   # compressed, and pg_restore can restore it selectively
-        "--file", str(target),
+        "--host",
+        url.host or "localhost",
+        "--port",
+        str(url.port or 5432),
+        "--username",
+        url.username or "postgres",
+        "--dbname",
+        url.database,
+        "--format",
+        "custom",  # compressed, and pg_restore can restore it selectively
+        "--file",
+        str(target),
     ]
 
     # The password goes in the environment, never on the command line, where it

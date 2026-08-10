@@ -1,14 +1,20 @@
 """Validation, duplicate-guard, and error-path coverage for admin routes."""
+
 from unittest.mock import patch
 
 from app.backup import BackupError
 from app.models import Allocation, Beneficiary, QuarterBudget, User, Usage, UtilityType
 from tests.conftest import (
-    make_user, make_utility_type, make_beneficiary, make_meter, login,
+    make_user,
+    make_utility_type,
+    make_beneficiary,
+    make_meter,
+    login,
 )
 
 
 # --- user & utility-type creation -------------------------------------------------
+
 
 def test_create_user_and_reject_duplicate_email(client, db):
     make_user(db, "Ada", "ada@example.com", "pw", "admin")
@@ -44,6 +50,7 @@ def test_create_utility_type_and_reject_duplicate(client, db):
 
 
 # --- beneficiary field validation --------------------------------------------------
+
 
 def test_beneficiary_requires_a_name(client, db):
     make_user(db, "Ada", "ada@example.com", "pw", "admin")
@@ -86,6 +93,7 @@ def test_duplicate_beneficiary_name_is_rejected(client, db):
 
 
 # --- allocation validation ---------------------------------------------------------
+
 
 def setup_meter(db):
     admin = make_user(db, "Ada", "ada@example.com", "pw", "admin")
@@ -137,6 +145,7 @@ def test_allocation_rejects_a_negative_amount(client, db):
 
 # --- budget validation -------------------------------------------------------------
 
+
 def test_budget_rejects_a_non_numeric_amount(client, db):
     make_user(db, "Ada", "ada@example.com", "pw", "admin")
     login(client, "ada@example.com", "pw")
@@ -164,6 +173,7 @@ def test_budget_remaining_endpoint_handles_a_bad_period(client, db):
 
 
 # --- usage validation --------------------------------------------------------------
+
 
 def setup_major_account(db):
     admin = make_user(db, "Ada", "ada@example.com", "pw", "admin")
@@ -211,6 +221,7 @@ def test_usage_needs_a_single_quarter(client, db):
 
 
 # --- backup route error handling ---------------------------------------------------
+
 
 def test_backup_route_reports_failure(client, db):
     make_user(db, "Ada", "ada@example.com", "pw", "admin")

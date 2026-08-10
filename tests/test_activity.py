@@ -18,10 +18,10 @@ def test_allocating_records_who_when_and_where(client, db):
     )
 
     entry = ActivityLog.query.filter_by(action="Allocated").one()
-    assert entry.user.name == "Ada Admin"      # who
-    assert entry.created_at is not None        # when
+    assert entry.user.name == "Ada Admin"  # who
+    assert entry.created_at is not None  # when
     assert entry.beneficiary_name == "Jane Doe"
-    assert entry.unit == "DAF"                 # department
+    assert entry.unit == "DAF"  # department
     assert entry.utility == "Power"
     assert entry.number == "PM-001"
     assert entry.quarter == 3 and entry.year == 2026
@@ -89,7 +89,9 @@ def test_resaving_with_no_changes_logs_nothing(client, db):
     login(client, "ada@example.com", "pw")
 
     base = {"beneficiary_id": beneficiary.id, "quarter": 3, "year": 2026}
-    client.post("/admin/allocations/new", data={**base, f"amount_{meter.id}": "300000"}, follow_redirects=True)
+    client.post(
+        "/admin/allocations/new", data={**base, f"amount_{meter.id}": "300000"}, follow_redirects=True
+    )
     resp = client.post(
         "/admin/allocations/new", data={**base, f"amount_{meter.id}": "300000"}, follow_redirects=True
     )
@@ -130,8 +132,12 @@ def test_updating_an_allocation_is_logged_separately(client, db):
     login(client, "ada@example.com", "pw")
 
     payload = {"beneficiary_id": beneficiary.id, "quarter": 3, "year": 2026}
-    client.post("/admin/allocations/new", data={**payload, f"amount_{meter.id}": "100000"}, follow_redirects=True)
-    client.post("/admin/allocations/new", data={**payload, f"amount_{meter.id}": "180000"}, follow_redirects=True)
+    client.post(
+        "/admin/allocations/new", data={**payload, f"amount_{meter.id}": "100000"}, follow_redirects=True
+    )
+    client.post(
+        "/admin/allocations/new", data={**payload, f"amount_{meter.id}": "180000"}, follow_redirects=True
+    )
 
     # the original amount survives in the log even though the allocation was overwritten
     assert float(ActivityLog.query.filter_by(action="Allocated").one().amount) == 100000
@@ -201,7 +207,7 @@ def test_pdf_report_generation_is_logged(client, db):
     entry = ActivityLog.query.filter_by(action="Generated PDF report").one()
     assert entry.user.name == "Ada Admin"
     assert entry.quarter == 3 and entry.year == 2026
-    assert entry.utility == "Power"       # records which filter was exported
+    assert entry.utility == "Power"  # records which filter was exported
     assert entry.beneficiary_name is None  # system-wide action, not tied to one person
     assert entry.amount is None
 

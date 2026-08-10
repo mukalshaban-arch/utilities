@@ -123,7 +123,8 @@ def test_passkey_cannot_be_reused(client, db):
 
     client.post("/auth/reset", data={"email": "bob@example.com", "passkey": passkey}, follow_redirects=True)
     client.post(
-        "/auth/reset/password", data={"password": "first-new-pw", "confirm": "first-new-pw"},
+        "/auth/reset/password",
+        data={"password": "first-new-pw", "confirm": "first-new-pw"},
         follow_redirects=True,
     )
 
@@ -144,7 +145,8 @@ def test_mismatched_passwords_are_rejected(client, db):
     client.post("/auth/reset", data={"email": "bob@example.com", "passkey": passkey}, follow_redirects=True)
 
     resp = client.post(
-        "/auth/reset/password", data={"password": "password-one", "confirm": "password-two"},
+        "/auth/reset/password",
+        data={"password": "password-one", "confirm": "password-two"},
         follow_redirects=True,
     )
 
@@ -167,7 +169,8 @@ def test_reset_clears_an_existing_lockout(client, db):
 
     client.post("/auth/reset", data={"email": "bob@example.com", "passkey": passkey}, follow_redirects=True)
     client.post(
-        "/auth/reset/password", data={"password": "brand-new-pw", "confirm": "brand-new-pw"},
+        "/auth/reset/password",
+        data={"password": "brand-new-pw", "confirm": "brand-new-pw"},
         follow_redirects=True,
     )
 

@@ -1,12 +1,21 @@
 import csv
 import io
-from datetime import date, datetime
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from flask import (
-    Blueprint, render_template, redirect, url_for, flash, request, jsonify,
-    current_app, send_file, abort, Response,
+    Blueprint,
+    render_template,
+    redirect,
+    url_for,
+    flash,
+    request,
+    jsonify,
+    current_app,
+    send_file,
+    abort,
+    Response,
 )
 from flask_login import login_required, current_user
 from sqlalchemy.exc import IntegrityError
@@ -64,6 +73,7 @@ def restrict_to_admin():
 # Shared helpers
 # --------------------------------------------------------------------------
 
+
 @admin_bp.route("/beneficiaries/search")
 def search_beneficiaries():
     """Type-ahead lookup. Returns at most 10 matches so the register can grow freely."""
@@ -77,9 +87,7 @@ def search_beneficiaries():
         .limit(10)
         .all()
     )
-    return jsonify(
-        [{"id": b.id, "name": b.name, "label": b.label, "position": b.position} for b in matches]
-    )
+    return jsonify([{"id": b.id, "name": b.name, "label": b.label, "position": b.position} for b in matches])
 
 
 @admin_bp.route("/beneficiaries/<int:beneficiary_id>/meters")
@@ -105,7 +113,9 @@ def beneficiary_meters(beneficiary_id):
     meters = []
     for m in beneficiary.meters:
         # Carry-forward only applies to Major-Account water/power meters.
-        carry = str(carry_in(m.id, year, quarter)) if (quarter and year and is_carryforward_meter(m)) else None
+        carry = (
+            str(carry_in(m.id, year, quarter)) if (quarter and year and is_carryforward_meter(m)) else None
+        )
         meters.append(
             {
                 "id": m.id,
@@ -125,7 +135,9 @@ def parse_meter_rows():
     numbers = request.form.getlist("meter_number")
 
     rows = []
-    for meter_id, utility_type_id, number in zip(ids, utilities, numbers):
+    # strict=False: these lists come straight from form data and may legitimately
+    # be uneven if a row was only partially filled in.
+    for meter_id, utility_type_id, number in zip(ids, utilities, numbers, strict=False):
         number = number.strip()
         if not number:
             continue
@@ -173,6 +185,7 @@ def read_beneficiary_fields():
 # Dashboard
 # --------------------------------------------------------------------------
 
+
 @admin_bp.route("/")
 def dashboard():
     year, quarter = current_period()
@@ -184,16 +197,12 @@ def dashboard():
         .scalar()
     )
     usage_year = (
-        db.session.query(db.func.coalesce(db.func.sum(Usage.amount), 0))
-        .filter(Usage.year == year)
-        .scalar()
+        db.session.query(db.func.coalesce(db.func.sum(Usage.amount), 0)).filter(Usage.year == year).scalar()
     )
 
     # Current outstanding standing across Major-Account water/power meters.
     ma_groups = filter_major_account_groups()
-    outstanding = sum(
-        (meter_ledger(m.id, year, 4)["balance"] for _, meters in ma_groups for m in meters), 0
-    )
+    outstanding = sum((meter_ledger(m.id, year, 4)["balance"] for _, meters in ma_groups for m in meters), 0)
 
     # Allocation split by utility this year (for the doughnut).
     utility_split = (
@@ -400,9 +409,7 @@ def beneficiaries():
     facility = (request.args.get("facility") or "").strip()
     department = (request.args.get("department") or "").strip()
 
-    query = Beneficiary.query.options(
-        selectinload(Beneficiary.meters).selectinload(Meter.utility_type)
-    )
+    query = Beneficiary.query.options(selectinload(Beneficiary.meters).selectinload(Meter.utility_type))
     if name:
         query = query.filter(Beneficiary.name.ilike(f"%{name}%"))
     if position:
@@ -433,6 +440,7 @@ def beneficiaries():
 # Beneficiary register
 # --------------------------------------------------------------------------
 
+
 @admin_bp.route("/beneficiaries/new", methods=["GET", "POST"])
 def new_beneficiary():
     utility_types = UtilityType.query.order_by(UtilityType.name).all()
@@ -446,9 +454,7 @@ def new_beneficiary():
         else:
             beneficiary = Beneficiary(**values)
             for row in parse_meter_rows():
-                beneficiary.meters.append(
-                    Meter(utility_type_id=row["utility_type_id"], number=row["number"])
-                )
+                beneficiary.meters.append(Meter(utility_type_id=row["utility_type_id"], number=row["number"]))
             db.session.add(beneficiary)
             db.session.flush()
             log_activity(current_user, "Registered beneficiary", beneficiary)
@@ -544,6 +550,7 @@ def meter_in_use(meter_id):
 # --------------------------------------------------------------------------
 # Quarter budget: the pool the admin allocates from
 # --------------------------------------------------------------------------
+
 
 def quarter_allocated(year, quarter):
     """Total allocated across all meters for a quarter."""
@@ -642,8 +649,12 @@ def save_budgets(year):
             previous = budget.amount
             budget.amount = amount
             log_activity(
-                current_user, "Updated quarter budget",
-                quarter=quarter, year=year, amount=amount, previous_amount=previous,
+                current_user,
+                "Updated quarter budget",
+                quarter=quarter,
+                year=year,
+                amount=amount,
+                previous_amount=previous,
             )
             changed += 1
 
@@ -655,6 +666,7 @@ def save_budgets(year):
 # --------------------------------------------------------------------------
 # Major Accounts: usage & carry-forward ledger (water/power only)
 # --------------------------------------------------------------------------
+
 
 def eligible_major_account_meters():
     """Water/power meters belonging to Major Accounts, grouped by beneficiary."""
@@ -725,7 +737,9 @@ def major_accounts():
             if error:
                 flash(error, "danger")
             elif saved:
-                flash(f"Saved {saved} usage figure(s) for Q{filters['quarter']} {filters['year']}.", "success")
+                flash(
+                    f"Saved {saved} usage figure(s) for Q{filters['quarter']} {filters['year']}.", "success"
+                )
             else:
                 flash("No usage figures were changed.", "info")
             return redirect(url_for("admin.major_accounts", **filters))
@@ -774,9 +788,9 @@ def ledger_charts(groups, year):
     allocation, usage, balance = [], [], []
     for quarter in (1, 2, 3, 4):
         ledgers = [meter_ledger(m.id, year, quarter) for m in meters]
-        allocation.append(float(sum((l["allocation"] for l in ledgers), 0)))
-        usage.append(float(sum((l["usage"] for l in ledgers), 0)))
-        balance.append(float(sum((l["balance"] for l in ledgers), 0)))
+        allocation.append(float(sum((line["allocation"] for line in ledgers), 0)))
+        usage.append(float(sum((line["usage"] for line in ledgers), 0)))
+        balance.append(float(sum((line["balance"] for line in ledgers), 0)))
 
     usage_by_utility = {}
     for meter in meters:
@@ -849,7 +863,11 @@ def ledger_report_scope(filters):
 
 
 def ledger_period_label(filters):
-    return f"{filters['year']} (all quarters)" if filters["quarter"] == 0 else f"{filters['year']} Q{filters['quarter']}"
+    return (
+        f"{filters['year']} (all quarters)"
+        if filters["quarter"] == 0
+        else f"{filters['year']} Q{filters['quarter']}"
+    )
 
 
 def ledger_download_name(filters):
@@ -868,8 +886,11 @@ def major_accounts_csv():
     lines = ledger_report_lines(filters)
 
     log_activity(
-        current_user, "Generated ledger CSV report",
-        quarter=filters["quarter"], year=filters["year"], utility=filters["utility"] or None,
+        current_user,
+        "Generated ledger CSV report",
+        quarter=filters["quarter"],
+        year=filters["year"],
+        utility=filters["utility"] or None,
     )
     db.session.commit()
 
@@ -878,13 +899,30 @@ def major_accounts_csv():
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     writer.writerow(
-        ["Beneficiary", "Utility", "Number", "Quarter", "Carried In", "Allocation", "Pool", "Usage", "Balance"]
+        [
+            "Beneficiary",
+            "Utility",
+            "Number",
+            "Quarter",
+            "Carried In",
+            "Allocation",
+            "Pool",
+            "Usage",
+            "Balance",
+        ]
     )
     for line in lines:
         writer.writerow(
             [
-                line["beneficiary"], line["utility"], line["number"], f"Q{line['quarter']} {filters['year']}",
-                line["carry_in"], line["allocation"], line["pool"], line["usage"], line["balance"],
+                line["beneficiary"],
+                line["utility"],
+                line["number"],
+                f"Q{line['quarter']} {filters['year']}",
+                line["carry_in"],
+                line["allocation"],
+                line["pool"],
+                line["usage"],
+                line["balance"],
             ]
         )
     writer.writerow(["Total", "", "", "", "", total_allocation, "", total_usage, total_balance])
@@ -902,8 +940,11 @@ def major_accounts_pdf():
     lines = ledger_report_lines(filters)
 
     log_activity(
-        current_user, "Generated ledger PDF report",
-        quarter=filters["quarter"], year=filters["year"], utility=filters["utility"] or None,
+        current_user,
+        "Generated ledger PDF report",
+        quarter=filters["quarter"],
+        year=filters["year"],
+        utility=filters["utility"] or None,
     )
     db.session.commit()
 
@@ -911,9 +952,18 @@ def major_accounts_pdf():
         return f"UGX {value or 0:,.0f}"
 
     rows = [
-        [l["beneficiary"], l["utility"], l["number"], f"Q{l['quarter']} {filters['year']}",
-         money(l["carry_in"]), money(l["allocation"]), money(l["pool"]), money(l["usage"]), money(l["balance"])]
-        for l in lines
+        [
+            line["beneficiary"],
+            line["utility"],
+            line["number"],
+            f"Q{line['quarter']} {filters['year']}",
+            money(line["carry_in"]),
+            money(line["allocation"]),
+            money(line["pool"]),
+            money(line["usage"]),
+            money(line["balance"]),
+        ]
+        for line in lines
     ]
     if lines:
         total_allocation, total_usage, total_balance = ledger_report_totals(filters, lines)
@@ -925,7 +975,17 @@ def major_accounts_pdf():
         title="Major Accounts Ledger",
         subtitle=f"{ledger_report_scope(filters)} — {ledger_period_label(filters)}",
         meta_lines=[f"Generated {datetime.now().strftime('%d %b %Y %H:%M')}"],
-        headers=["Beneficiary", "Utility", "Number", "Quarter", "Carried In", "Allocation", "Pool", "Usage", "Balance"],
+        headers=[
+            "Beneficiary",
+            "Utility",
+            "Number",
+            "Quarter",
+            "Carried In",
+            "Allocation",
+            "Pool",
+            "Usage",
+            "Balance",
+        ],
         rows=rows,
         right_align_from=4,
         bold_last_row=bool(lines),
@@ -958,19 +1018,36 @@ def save_usage(groups, quarter, year):
 
         if usage is None:
             db.session.add(
-                Usage(meter_id=meter_id, quarter=quarter, year=year, amount=amount, created_by_id=current_user.id)
+                Usage(
+                    meter_id=meter_id,
+                    quarter=quarter,
+                    year=year,
+                    amount=amount,
+                    created_by_id=current_user.id,
+                )
             )
             log_activity(
-                current_user, "Recorded usage", meter.beneficiary,
-                meter=meter, quarter=quarter, year=year, amount=amount,
+                current_user,
+                "Recorded usage",
+                meter.beneficiary,
+                meter=meter,
+                quarter=quarter,
+                year=year,
+                amount=amount,
             )
             changed += 1
         elif usage.amount != amount:
             previous = usage.amount
             usage.amount = amount
             log_activity(
-                current_user, "Updated usage", meter.beneficiary,
-                meter=meter, quarter=quarter, year=year, amount=amount, previous_amount=previous,
+                current_user,
+                "Updated usage",
+                meter.beneficiary,
+                meter=meter,
+                quarter=quarter,
+                year=year,
+                amount=amount,
+                previous_amount=previous,
             )
             changed += 1
 
@@ -982,6 +1059,7 @@ def save_usage(groups, quarter, year):
 # --------------------------------------------------------------------------
 # Allocations
 # --------------------------------------------------------------------------
+
 
 @admin_bp.route("/allocations/new", methods=["GET", "POST"])
 def new_allocation():
@@ -1048,8 +1126,13 @@ def save_allocations(beneficiary, quarter, year):
                 )
             )
             log_activity(
-                current_user, "Allocated", beneficiary,
-                meter=meter, quarter=quarter, year=year, amount=amount,
+                current_user,
+                "Allocated",
+                beneficiary,
+                meter=meter,
+                quarter=quarter,
+                year=year,
+                amount=amount,
             )
             changed += 1
 
@@ -1057,8 +1140,14 @@ def save_allocations(beneficiary, quarter, year):
             previous = allocation.amount
             allocation.amount = amount
             log_activity(
-                current_user, "Updated allocation", beneficiary,
-                meter=meter, quarter=quarter, year=year, amount=amount, previous_amount=previous,
+                current_user,
+                "Updated allocation",
+                beneficiary,
+                meter=meter,
+                quarter=quarter,
+                year=year,
+                amount=amount,
+                previous_amount=previous,
             )
             changed += 1
         # else: figure is unchanged - nothing happened, so nothing to log
@@ -1071,6 +1160,7 @@ def save_allocations(beneficiary, quarter, year):
 # --------------------------------------------------------------------------
 # Users / utility types
 # --------------------------------------------------------------------------
+
 
 @admin_bp.route("/users/new", methods=["GET", "POST"])
 def new_user():
@@ -1105,6 +1195,7 @@ def new_utility_type():
 # --------------------------------------------------------------------------
 # Quarter summary
 # --------------------------------------------------------------------------
+
 
 def build_quarter_summary(filters):
     """Totals for the filtered allocations, grouped by utility and by beneficiary."""

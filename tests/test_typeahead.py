@@ -40,16 +40,14 @@ def test_meters_endpoint_returns_numbers_with_existing_amounts(client, db):
     water = make_utility_type(db, "Water")
     beneficiary = make_beneficiary(db, "Jane Doe")
     power_meter = make_meter(db, beneficiary, power, "PM-001")
-    water_meter = make_meter(db, beneficiary, water, "WM-001")
+    make_meter(db, beneficiary, water, "WM-001")  # registered, left unallocated
     db.session.add(
         Allocation(meter_id=power_meter.id, quarter=3, year=2026, amount=500000, created_by_id=admin.id)
     )
     db.session.commit()
     login(client, "ada@example.com", "pw")
 
-    meters = client.get(
-        f"/admin/beneficiaries/{beneficiary.id}/meters?quarter=3&year=2026"
-    ).get_json()
+    meters = client.get(f"/admin/beneficiaries/{beneficiary.id}/meters?quarter=3&year=2026").get_json()
 
     by_number = {m["number"]: m for m in meters}
     assert by_number["PM-001"]["utility"] == "Power"

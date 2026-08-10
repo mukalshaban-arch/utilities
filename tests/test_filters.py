@@ -31,7 +31,9 @@ def seed(db):
         )
     # a different quarter, to prove the quarter filter bites
     db.session.add(
-        Allocation(meter_id=meters["zara_power"].id, quarter=3, year=2026, amount=777000, created_by_id=admin.id)
+        Allocation(
+            meter_id=meters["zara_power"].id, quarter=3, year=2026, amount=777000, created_by_id=admin.id
+        )
     )
     db.session.commit()
     return power, water
@@ -86,8 +88,12 @@ def test_report_sorting_by_allocated(client, db):
     seed(db)
     login(client, "ada@example.com", "pw")
 
-    asc = rows_of(client.get("/reports/quarterly?year=2026&quarter=2&sort=allocated&direction=asc").data.decode())
-    desc = rows_of(client.get("/reports/quarterly?year=2026&quarter=2&sort=allocated&direction=desc").data.decode())
+    asc = rows_of(
+        client.get("/reports/quarterly?year=2026&quarter=2&sort=allocated&direction=asc").data.decode()
+    )
+    desc = rows_of(
+        client.get("/reports/quarterly?year=2026&quarter=2&sort=allocated&direction=desc").data.decode()
+    )
 
     assert asc == ["Alan Head", "Zara Director", "HQ Account - HQ"]  # 100k, 300k, 500k
     assert desc == list(reversed(asc))
@@ -97,7 +103,9 @@ def test_report_sorting_by_name(client, db):
     seed(db)
     login(client, "ada@example.com", "pw")
 
-    asc = rows_of(client.get("/reports/quarterly?year=2026&quarter=2&sort=beneficiary&direction=asc").data.decode())
+    asc = rows_of(
+        client.get("/reports/quarterly?year=2026&quarter=2&sort=beneficiary&direction=asc").data.decode()
+    )
     assert asc == ["Alan Head", "HQ Account - HQ", "Zara Director"]
 
 

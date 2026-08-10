@@ -1,4 +1,5 @@
 """Shared filtering / sorting for the reports and allocation-summary pages."""
+
 from flask import request
 
 from app.models import Allocation, Meter, Beneficiary, UtilityType
@@ -71,4 +72,8 @@ def matching_beneficiaries(filters):
 
 
 def period_label(filters):
-    return f"{filters['year']} Q{filters['quarter']}" if filters["quarter"] else f"{filters['year']} (all quarters)"
+    return (
+        f"{filters['year']} Q{filters['quarter']}"
+        if filters["quarter"]
+        else f"{filters['year']} (all quarters)"
+    )

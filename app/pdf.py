@@ -1,4 +1,5 @@
 """Small reusable helper for rendering a titled data table to a PDF."""
+
 import io
 
 from reportlab.lib import colors

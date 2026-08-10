@@ -10,6 +10,7 @@ The financial year runs 1 July - 30 June:
 A financial year is labelled by the calendar year in which it starts, so any
 date from July 2026 to June 2027 belongs to financial year 2026.
 """
+
 from datetime import date
 
 QUARTER_MONTHS = {

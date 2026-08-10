@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 
 import click
 from flask import Flask, redirect, url_for, session
-from flask_login import current_user, login_required
+from flask_login import login_required
 
 from config import Config
 from app.extensions import db, login_manager, migrate, csrf
@@ -32,6 +32,7 @@ def create_app(config_class=Config):
     @app.template_filter("qmonths")
     def format_qmonths(quarter):
         from app.fiscal import quarter_span
+
         return quarter_span(quarter)
 
     @app.template_filter("localtime")
@@ -76,7 +77,7 @@ def register_cli(app):
         try:
             target = create_backup()
         except BackupError as exc:
-            raise SystemExit(f"Backup failed: {exc}")
+            raise SystemExit(f"Backup failed: {exc}") from exc
 
         size_mb = target.stat().st_size / 1024 / 1024
         click.echo(f"Backup written: {target} ({size_mb:.2f} MB)")

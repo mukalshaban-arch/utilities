@@ -1,4 +1,3 @@
-from pathlib import Path
 from unittest.mock import patch
 
 from app.backup import BackupError
@@ -22,7 +21,7 @@ def test_seed_is_idempotent(app, db):
     runner.invoke(args=["seed"])
     runner.invoke(args=["seed"])
 
-    assert UtilityType.query.count() == 5          # not duplicated
+    assert UtilityType.query.count() == 5  # not duplicated
     assert User.query.filter_by(email="admin@example.com").count() == 1
 
 
@@ -39,8 +38,10 @@ def test_backup_command_reports_written_file_and_prunes(app, db, tmp_path):
     target = tmp_path / "utility_manager_2026-01-01_000000.dump"
     target.write_bytes(b"PGDMP" * 300)
 
-    with patch("app.backup.create_backup", return_value=target), \
-         patch("app.backup.prune_backups", return_value=["old_one.dump"]):
+    with (
+        patch("app.backup.create_backup", return_value=target),
+        patch("app.backup.prune_backups", return_value=["old_one.dump"]),
+    ):
         result = app.test_cli_runner().invoke(args=["backup", "--keep", "5"])
 
     assert result.exit_code == 0

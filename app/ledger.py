@@ -10,6 +10,7 @@ The carry-in is never stored; it is always the cumulative (allocation - usage) o
 every earlier period, so the figures cannot drift out of step. Deficits carry as
 negative numbers, and the ledger rolls continuously across year boundaries.
 """
+
 from sqlalchemy import func
 
 from app.extensions import db
@@ -25,9 +26,11 @@ def _before(model, year, quarter):
 
 
 def _sum(model, meter_id, condition):
-    return db.session.query(func.coalesce(func.sum(model.amount), 0)).filter(
-        model.meter_id == meter_id, condition
-    ).scalar()
+    return (
+        db.session.query(func.coalesce(func.sum(model.amount), 0))
+        .filter(model.meter_id == meter_id, condition)
+        .scalar()
+    )
 
 
 def carry_in(meter_id, year, quarter):
@@ -40,9 +43,7 @@ def carry_in(meter_id, year, quarter):
 def meter_ledger(meter_id, year, quarter):
     """The full ledger line for one meter in one quarter."""
     carried = carry_in(meter_id, year, quarter)
-    allocation = _sum(
-        Allocation, meter_id, db.and_(Allocation.year == year, Allocation.quarter == quarter)
-    )
+    allocation = _sum(Allocation, meter_id, db.and_(Allocation.year == year, Allocation.quarter == quarter))
     usage = _sum(Usage, meter_id, db.and_(Usage.year == year, Usage.quarter == quarter))
     pool = carried + allocation
     return {

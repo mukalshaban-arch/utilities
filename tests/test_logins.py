@@ -44,9 +44,9 @@ def test_attempt_counter_resets_after_a_success(client, db):
     make_user(db, "Ada", "ada@example.com", "pw", "admin")
 
     login(client, "ada@example.com", "wrong")
-    login(client, "ada@example.com", "pw")       # attempts == 2
+    login(client, "ada@example.com", "pw")  # attempts == 2
     client.get("/auth/logout")
-    login(client, "ada@example.com", "wrong")    # new run starts back at 1
+    login(client, "ada@example.com", "wrong")  # new run starts back at 1
     login(client, "ada@example.com", "pw")
 
     entries = LoginLog.query.order_by(LoginLog.id).all()

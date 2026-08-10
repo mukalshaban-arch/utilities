@@ -15,9 +15,7 @@ class Config:
 
     # Log the user out after this much inactivity. The cookie's signed timestamp is
     # refreshed on every request (sliding window), so an idle session expires server-side.
-    PERMANENT_SESSION_LIFETIME = timedelta(
-        minutes=int(os.environ.get("SESSION_TIMEOUT_MINUTES", 5))
-    )
+    PERMANENT_SESSION_LIFETIME = timedelta(minutes=int(os.environ.get("SESSION_TIMEOUT_MINUTES", 5)))
     SESSION_REFRESH_EACH_REQUEST = True
 
     # Where pg_dump writes backups, and (optionally) where pg_dump itself lives.

@@ -9,8 +9,12 @@ def test_quarterly_report_lists_each_allocated_number(client, db):
     meter_1 = make_meter(db, beneficiary, power, "PM-001")
     meter_2 = make_meter(db, beneficiary, power, "PM-002")
 
-    db.session.add(Allocation(meter_id=meter_1.id, quarter=2, year=2026, amount=200000, created_by_id=admin.id))
-    db.session.add(Allocation(meter_id=meter_2.id, quarter=2, year=2026, amount=100000, created_by_id=admin.id))
+    db.session.add(
+        Allocation(meter_id=meter_1.id, quarter=2, year=2026, amount=200000, created_by_id=admin.id)
+    )
+    db.session.add(
+        Allocation(meter_id=meter_2.id, quarter=2, year=2026, amount=100000, created_by_id=admin.id)
+    )
     db.session.commit()
 
     login(client, "ada@example.com", "pw")
@@ -48,8 +52,12 @@ def test_pdf_respects_filters(client, db):
     beneficiary = make_beneficiary(db, "Jane Doe")
     power_meter = make_meter(db, beneficiary, power, "PM-001")
     water_meter = make_meter(db, beneficiary, water, "WM-001")
-    db.session.add(Allocation(meter_id=power_meter.id, quarter=2, year=2026, amount=100000, created_by_id=admin.id))
-    db.session.add(Allocation(meter_id=water_meter.id, quarter=2, year=2026, amount=50000, created_by_id=admin.id))
+    db.session.add(
+        Allocation(meter_id=power_meter.id, quarter=2, year=2026, amount=100000, created_by_id=admin.id)
+    )
+    db.session.add(
+        Allocation(meter_id=water_meter.id, quarter=2, year=2026, amount=50000, created_by_id=admin.id)
+    )
     db.session.commit()
 
     login(client, "ada@example.com", "pw")

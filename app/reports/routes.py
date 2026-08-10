@@ -143,9 +143,7 @@ def quarterly_pdf():
         Paragraph("Utility Allocations", styles["Title"]),
         Paragraph(period_label(filters), styles["Heading2"]),
         Paragraph(active_filter_text(filters), styles["Normal"]),
-        Paragraph(
-            f"Generated {datetime.now().strftime('%d %b %Y %H:%M')}", styles["Normal"]
-        ),
+        Paragraph(f"Generated {datetime.now().strftime('%d %b %Y %H:%M')}", styles["Normal"]),
         Spacer(1, 8 * mm),
     ]
 

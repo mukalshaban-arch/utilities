@@ -30,11 +30,11 @@ def test_pages_embed_the_inactivity_timer(client, db):
 
     body = client.get("/admin/").data.decode()
 
-    assert "setTimeout(expire" in body       # the idle timer is wired
-    assert "/auth/ping" in body              # keepalive target
-    assert "300 * 1000" in body              # 5 minutes in milliseconds
+    assert "setTimeout(expire" in body  # the idle timer is wired
+    assert "/auth/ping" in body  # keepalive target
+    assert "300 * 1000" in body  # 5 minutes in milliseconds
 
 
 def test_login_page_has_no_inactivity_timer(client, db):
     body = client.get("/auth/login").data.decode()
-    assert "setTimeout(expire" not in body   # only runs once authenticated
+    assert "setTimeout(expire" not in body  # only runs once authenticated

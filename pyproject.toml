@@ -1,0 +1,16 @@
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+exclude = ["migrations", "venv", ".venv"]
+
+[tool.ruff.lint]
+# E/W: pycodestyle, F: pyflakes (unused imports, undefined names, syntax issues),
+# B: bugbear (common bug patterns), C4: comprehensions, SIM: simplifications.
+select = ["E", "W", "F", "B", "C4", "SIM"]
+ignore = [
+    "E501",  # line length is enforced by the formatter, not the linter
+]
+
+[tool.ruff.format]
+# Matches Black's style, so `ruff format` and `ruff format --check` behave predictably.
+quote-style = "double"

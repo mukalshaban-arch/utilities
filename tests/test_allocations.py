@@ -3,7 +3,7 @@ from tests.conftest import make_user, make_utility_type, make_beneficiary, make_
 
 
 def test_allocation_saved_per_meter(client, db):
-    admin = make_user(db, "Ada", "ada@example.com", "pw", "admin")
+    make_user(db, "Ada", "ada@example.com", "pw", "admin")
     power = make_utility_type(db, "Power")
     water = make_utility_type(db, "Water")
     beneficiary = make_beneficiary(db, "Jane Doe")
@@ -40,8 +40,12 @@ def test_resubmitting_updates_the_existing_allocation(client, db):
     login(client, "ada@example.com", "pw")
 
     payload = {"beneficiary_id": beneficiary.id, "quarter": 3, "year": 2026}
-    client.post("/admin/allocations/new", data={**payload, f"amount_{meter.id}": "100000"}, follow_redirects=True)
-    client.post("/admin/allocations/new", data={**payload, f"amount_{meter.id}": "180000"}, follow_redirects=True)
+    client.post(
+        "/admin/allocations/new", data={**payload, f"amount_{meter.id}": "100000"}, follow_redirects=True
+    )
+    client.post(
+        "/admin/allocations/new", data={**payload, f"amount_{meter.id}": "180000"}, follow_redirects=True
+    )
 
     allocation = Allocation.query.filter_by(meter_id=meter.id, quarter=3, year=2026).one()
     assert float(allocation.amount) == 180000
